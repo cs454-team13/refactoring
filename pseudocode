@@ -1,0 +1,22 @@
+refactoring_count = 0
+repeat
+    classes = set of classes in program
+    while !empty(classes) do
+        class = classes.pick() // pick() : remove and return a random element from the set
+        refactoring_types = set of refactoring refactoring_types
+        while !empty(refactoring_types) do
+            refactoring_type = refactoring_types.pick()
+            refactorings.populate(refactoringtype, class) // populate() : add all legal refactorings of given type on given class to the set
+            if !empty(refactorings) then
+                refactoring = refactorings.pick()
+                refactoring.apply()
+                if fitness_function_improves() then
+                    refactoring_count++
+                    update metric log
+                else
+                    refactoring.undo()
+                end
+            end
+        end
+    end
+until refactoring_count == desired_refacoring_count
