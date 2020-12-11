@@ -46,21 +46,23 @@ class PullUpMethod(Refactoring):
 
 class PushDownMethod(Refactoring):
     
-    def __init__(self, fname, src_cls, dst_cls, target):
+    def __init__(self, fname, src_cls, target):
         super(PushDownMethod, self).__init__(fname, src_cls)
         self.rtype = "PushDownMethod"
-        self.dst_cls = dst_cls
         self.target = target
 
     def create(self):
         super(PushDownMethod, self).create()
-        self.dst_cls = findHelper.get_class_from_name(self.refactoredtree, self.dst_cls)
         self.target = findHelper.get_method_from_name(self.src_cls, self.target)
 
     def apply(self):
         self.create()
         self.src_cls.body.remove(self.target)
-        self.dst_cls.body.append(self.target)
+        subclasses = findHelper.find_subclasses(self.refactoredtree, self.src_cls)
+        for subclass in subclasses:
+            if findHelper.find_method_in_class(subclass, self.target):
+                subclass.body.append(self.target)
+
         super().write_file()
 
 '''TODO: field-level Refactoring의 경우 class attribute, instance attribute 비교'''

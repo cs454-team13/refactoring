@@ -1,6 +1,12 @@
 import ast
 import astor
 
+def find_method_in_class(classNode, method):
+    for child in ast.walk(classNode):
+        if isinstance(child, ast.Call) and isinstance(child.func, ast.Attribute) and child.func.attr == method.name:
+            return True
+    return False
+
 def find_subclasses(tree, classNode):
     """Find the subclasses of input class.
         Assume the single inheritance
@@ -16,17 +22,14 @@ def find_subclasses(tree, classNode):
         If the classNode doesn't have any subclasses, then return None
     """
     classes = find_all_classes(tree)
-    subclasses = {}
+    subclasses = []
     for singleClass in classes:
-        superclass = find_superclasses(tree, singleClass)
-        if superclass is None or len(superclass) == 0:
+        superclass = find_superclass(tree, singleClass)
+        if superclass is None or superclass.name != classNode.name:
             continue
         else:
-            subclasses.add(singleClass)
-    if len(subclasses) == 0:
-        return None
-    else:
-        return subclasses
+            subclasses.append(singleClass)
+    return subclasses
 
 def find_superclass(tree, classNode):
     """Find the superclass of input class.
