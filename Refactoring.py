@@ -1,4 +1,4 @@
-import astor
+import ast, astor
 import FindHelper as findHelper
 
 class Refactoring:
@@ -64,7 +64,7 @@ class PushDownMethod(Refactoring):
         super().write_file()
 
 '''TODO: field-level Refactoring의 경우 class attribute, instance attribute 비교'''
-
+''' instance field만 고려하는걸로'''
 class PullUpField(Refactoring):
     
     def __init__(self, fname, src_cls, target):
@@ -74,13 +74,18 @@ class PullUpField(Refactoring):
 
     def create(self):
         super(PullUpField, self).create()
-        self.target = findHelper.get_field_from_name(self.src_cls, self.target)
+        self.target = ast.parse("self.{} = None".format(self.target))
 
     def apply(self):
         self.create()
         parent = findHelper.find_superclass(self.refactoredtree, self.src_cls)
-        self.src_cls.body.remove(self.target)
-        parent.body.append(self.target)
+        parentinit = None
+        for node in ast.walk(parent):
+            if isinstance(node, ast.FunctionDef) and node.name == '__init__':
+                parentinit = node
+                break
+        if parentinit is not None:
+            parentinit.body.append(self.target)
         super().write_file()
 
 class PushDownField(Refactoring):
@@ -94,15 +99,31 @@ class PushDownField(Refactoring):
     def create(self):
         super(PushDownField, self).create()
         self.dst_cls = findHelper.get_class_from_name(self.refactoredtree, self.dst_cls)
-        self.target = findHelper.get_field_from_name(self.src_cls, self.target)
+        parentinit = None
+        for node in ast.walk(self.src_cls):
+            if isinstance(node, ast.FunctionDef) and node.name == '__init__':
+                parentinit = node
+                break
+        if parentinit is not None:
+            for node in parentinit.body:
+                if isinstance(node, ast.Assign):
+                    if isinstance(node.targets[0], ast.Attribute) and isinstance(node.targets[0].value, ast.Name) and node.targets[0].value.id == 'self' and node.targets[0].attr == self.target:
+                        self.target = node
+                        break
 
     def apply(self):
         self.create()
-        self.src_cls.body.remove(self.target)
-        self.dst_cls.body.append(self.target)
+        parentinit = None
+        for node in ast.walk(self.src_cls):
+            if isinstance(node, ast.FunctionDef) and node.name == '__init__':
+                parentinit = node
+                break
+        if parentinit is not None:
+            parentinit.body.remove(self.target)
+        for node in ast.walk(self.dst_cls):
+            if isinstance(node, ast.FunctionDef) and node.name == '__init__':
+                parentinit = node
+                break
+        if parentinit is not None:
+            parentinit.body.insert(1, self.target)
         super().write_file()
-    
-    
-    
-
-

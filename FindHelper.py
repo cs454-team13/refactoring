@@ -1,4 +1,5 @@
 import ast
+import astor
 
 def find_subclasses(tree, classNode):
     """Find the subclasses of input class.
@@ -75,6 +76,7 @@ def find_all_methods(astree):
 
 def find_all_fields(astree):
     """Find all fields in input AST.
+       Assume fields are instance fields
     Args:
         astree:
             It is made by astor.parse_file()
@@ -82,7 +84,14 @@ def find_all_fields(astree):
         return the list of fields
         If there's no any field, then return the empty list
     """
-    found_fields = [node for node in ast.walk(astree) if isinstance(node, ast.Assign)]
+    found_fields = set()
+    for node in ast.walk(astree):
+        if not isinstance(node, ast.Assign):
+            continue
+        for target in node.targets:
+            if isinstance(target, ast.Attribute):
+                found_fields.add(target)
+    # found_fields = [node for node in ast.walk(astree) if isinstance(node, ast.Assign) and  ]
     return found_fields
 
 def get_class_from_name(astree, className):
