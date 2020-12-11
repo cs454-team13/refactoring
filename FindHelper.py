@@ -1,11 +1,18 @@
 import ast
 import astor
+import astpretty
 
-def find_method_in_class(classNode, method):
+def find_call_in_class(classNode, method):
     for child in ast.walk(classNode):
         if isinstance(child, ast.Call) and isinstance(child.func, ast.Attribute) and child.func.attr == method.name:
             return True
     return False
+
+def find_method_in_class(classNode, method):
+    for child in ast.walk(classNode):
+        if isinstance(child, ast.FunctionDef) and child.name == method.name:
+            return child
+    return None
 
 def find_subclasses(tree, classNode):
     """Find the subclasses of input class.
@@ -45,11 +52,11 @@ def find_superclass(tree, classNode):
         return the immediate superclass of classNode
         If classNode doesn't have a superclass, then return None
     """
-    superclass_name = [superclass.id for superclass in classNode.bases]
-    if len(superclass_name) == 0:
+    superclassNames = [superclass.id for superclass in classNode.bases]
+    if len(superclassNames) == 0:
         return None
     else:
-        return [get_class_from_name(tree, e) for e in superclass_name][0] 
+        return [get_class_from_name(tree, e) for e in superclassNames][0] 
 
 def find_all_classes(astree):
     """Find all classes in input AST.

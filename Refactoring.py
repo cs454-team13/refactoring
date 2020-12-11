@@ -1,67 +1,75 @@
 import ast, astor
 import FindHelper as findHelper
+import astpretty
 
 class Refactoring:
 
-    def __init__(self, fname, src_cls):
+    def __init__(self, fname, astree, src_cls):
         self.fname = fname
+        self.astree = astree
         self.rtype = ""
         self.src_cls = src_cls
 
     def create(self):
         self.origintree = astor.parse_file(self.fname)
         self.refactoredtree = astor.parse_file(self.fname)
-        self.src_cls = findHelper.get_class_from_name(self.refactoredtree, self.src_cls)
 
-    def undo(self):
-        with open(self.fname, 'w') as f:
-            origin_source = astor.to_source(self.origintree)
-            f.write(origin_source)
-    
+    # def undo(self):
+    #     with open(self.fname, 'w') as f:
+    #         astpretty.pprint(self.origintree)
+    #         print(self.origintree is self.refactoredtree)
+    #         origin_source = astor.to_source(self.origintree)
+    #         f.write(origin_source)
+
     def write_file(self):
-        with open("refactored_{}".format(self.fname), 'w') as f:  # DEBUG
-        # with open(self.fname, 'w') as f:
-            refactored_source = astor.to_source(self.refactoredtree)
+        # with open("refactored_{}".format(self.fname), 'w') as f:  # DEBUG
+        self.origintree = astor.parse_file(self.fname)
+        with open("refactored_{}".format(self.fname), 'w') as f:
+            refactored_source = astor.to_source(self.astree)
             f.write(refactored_source)
 
 class PullUpMethod(Refactoring):
     
-    def __init__(self, fname, src_cls, target):
-        super(PullUpMethod, self).__init__(fname, src_cls)
+    def __init__(self, fname, astree, src_cls, target):
+        super(PullUpMethod, self).__init__(fname, astree, src_cls)
         self.rtype = "PullUpMethod"
         self.target = target
 
-    def create(self):
-        super(PullUpMethod, self).create()
-        self.target = findHelper.get_method_from_name(self.src_cls, self.target)
-
     def apply(self):
-        self.create()
-        parent = findHelper.find_superclass(self.refactoredtree, self.src_cls)
-        self.src_cls.body.remove(self.target)
-        parent.body.append(self.target)
-        super().write_file()
+        # Todo!: sibling classes should be also checked to pull up
+        parent = findHelper.find_superclass(self.astree, self.src_cls)
+        if parent is not None:
+            subclasses = findHelper.find_subclasses(self.astree, parent)
+            children = []
+            for subclass in subclasses:
+                child = findHelper.find_method_in_class(subclass, self.target)
+                if child is not None:
+                    children.append((subclass, child))
+            if len(children) >= 2:
+                for (subclass, child) in children:
+                    subclass.body.remove(child)
+                parent.body.append(self.target)
+                super().write_file()
 
 '''TODO: PushDown의 경우 어떤 subclass로 옮길지 정하는 조건문 필요'''
 
 class PushDownMethod(Refactoring):
     
-    def __init__(self, fname, src_cls, target):
-        super(PushDownMethod, self).__init__(fname, src_cls)
+    def __init__(self, fname, astree, src_cls, target):
+        super(PushDownMethod, self).__init__(fname, astree, src_cls)
         self.rtype = "PushDownMethod"
         self.target = target
 
-    def create(self):
-        super(PushDownMethod, self).create()
-        self.target = findHelper.get_method_from_name(self.src_cls, self.target)
-
     def apply(self):
-        self.create()
-        self.src_cls.body.remove(self.target)
-        subclasses = findHelper.find_subclasses(self.refactoredtree, self.src_cls)
+        remove = False
+        subclasses = findHelper.find_subclasses(self.astree, self.src_cls)
         for subclass in subclasses:
-            if findHelper.find_method_in_class(subclass, self.target):
+            if findHelper.find_call_in_class(subclass, self.target):
+                remove = True
                 subclass.body.append(self.target)
+
+        if remove:
+            self.src_cls.body.remove(self.target)
 
         super().write_file()
 
