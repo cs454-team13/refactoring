@@ -4,6 +4,7 @@ import sys
 from FindHelper import *
 import Refactoring
 import astpretty
+import colorama
 
 import fitness
 
@@ -70,11 +71,13 @@ def run(input_file: str, output_file: str):
 
 
 if __name__ == "__main__":
+    colorama.init()
+    Fore = colorama.Fore
     input_file = sys.argv[1]
     output_file = sys.argv[2]
 
     score_before = fitness.compute_project_score(input_file)
-    print('Before:', score_before)
+    print(Fore.YELLOW + "Before:", score_before, Fore.RESET)
     run(input_file, output_file)
     score_after = fitness.compute_project_score(output_file)
-    print('After:', score_after)
+    print(Fore.YELLOW + "After:", score_after, Fore.RESET)
