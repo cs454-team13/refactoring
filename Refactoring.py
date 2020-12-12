@@ -4,11 +4,12 @@ import astpretty
 
 class Refactoring:
 
-    def __init__(self, fname, astree, src_cls):
+    def __init__(self, fname, astree, src_cls, output_file: str):
         self.fname = fname
         self.astree = astree
         self.rtype = ""
         self.src_cls = src_cls
+        self.output_file = output_file
 
     def create(self):
         self.origintree = astor.parse_file(self.fname)
@@ -24,14 +25,14 @@ class Refactoring:
     def write_file(self):
         # with open("refactored_{}".format(self.fname), 'w') as f:  # DEBUG
         self.origintree = astor.parse_file(self.fname)
-        with open("refactored_{}".format(self.fname), 'w') as f:
+        with open(self.output_file, 'w') as f:
             refactored_source = astor.to_source(self.astree)
             f.write(refactored_source)
 
 class PullUpMethod(Refactoring):
-    
-    def __init__(self, fname, astree, src_cls, target):
-        super(PullUpMethod, self).__init__(fname, astree, src_cls)
+
+    def __init__(self, fname, astree, src_cls, target, *args, **kwargs):
+        super(PullUpMethod, self).__init__(fname, astree, src_cls, *args, **kwargs)
         self.rtype = "PullUpMethod"
         self.target = target
 
@@ -54,9 +55,9 @@ class PullUpMethod(Refactoring):
 '''TODO: PushDown의 경우 어떤 subclass로 옮길지 정하는 조건문 필요'''
 
 class PushDownMethod(Refactoring):
-    
-    def __init__(self, fname, astree, src_cls, target):
-        super(PushDownMethod, self).__init__(fname, astree, src_cls)
+
+    def __init__(self, fname, astree, src_cls, target, *args, **kwargs):
+        super(PushDownMethod, self).__init__(fname, astree, src_cls, *args, **kwargs)
         self.rtype = "PushDownMethod"
         self.target = target
 
@@ -76,9 +77,9 @@ class PushDownMethod(Refactoring):
 '''TODO: field-level Refactoring의 경우 class attribute, instance attribute 비교'''
 ''' instance field만 고려하는걸로'''
 class PullUpField(Refactoring):
-    
-    def __init__(self, fname, src_cls, target):
-        super(PullUpField, self).__init__(fname, src_cls)
+
+    def __init__(self, fname, src_cls, target, *args, **kwargs):
+        super(PullUpField, self).__init__(fname, src_cls, *args, **kwargs)
         self.rtype = "PullUpField"
         self.target = target
 
@@ -99,9 +100,9 @@ class PullUpField(Refactoring):
         super().write_file()
 
 class PushDownField(Refactoring):
-    
-    def __init__(self, fname, src_cls, dst_cls, target):
-        super(PushDownField, self).__init__(fname, src_cls)
+
+    def __init__(self, fname, src_cls, dst_cls, target, *args, **kwargs):
+        super(PushDownField, self).__init__(fname, src_cls, *args, **kwargs)
         self.rtype = "PushDownField"
         self.dst_cls = dst_cls
         self.target = target
