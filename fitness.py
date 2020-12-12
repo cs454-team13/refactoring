@@ -48,7 +48,6 @@ def compute_tcc(cls: astroid.nodes.ClassDef) -> int:
     # Contains methods that access a common attribute, i.e CAU
     cau_methods: typing.Set[typing.Tuple[str, str]] = set()
     for method1, method2 in itertools.combinations(methods, 2):
-        assert method1 < method2, "Not sorted!"
         if methods[method1] & methods[method2]:
             cau_methods.add((method1, method2))
     return len(cau_methods) / (k * (k - 1) / 2)
