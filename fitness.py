@@ -6,6 +6,7 @@ import statistics
 import sys
 
 import astpretty
+import astroid.manager
 import astroid.nodes
 import astroid.node_classes
 from pylint.pyreverse import inspector
@@ -102,6 +103,9 @@ def compute_project_score(project_path: str) -> ProjectScore:
             obj.lscc: LSCC score
             obj.tcc:  TCC score
     """
+    # Clear Astroid cache so that it always returns the correct result
+    astroid.manager.AstroidManager().clear_cache()
+
     project = inspector.project_from_files([project_path], project_name="the-project")
     linker = inspector.Linker(project, tag=True)
     # We need this to make the linker actually work on the project
@@ -161,8 +165,8 @@ class AstSelfFinder:
 
 
 def main(project_path: str) -> None:
-    print("Checking", project_path)
     print(compute_project_score(project_path))
+    # print("Cache id, again:", id(astroid.manager.AstroidManager.brain.astroid_cache))
 
 
 if __name__ == "__main__":
