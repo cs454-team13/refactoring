@@ -50,7 +50,7 @@ def run(input_file: str, output_dir: str):
                 refactoring_types.remove(picked_refactoring_type)
                 refactorings = populate(
                     fname=input_file,
-                    output_file=os.path.join(output_dir, input_file),
+                    output_file=os.path.join(output_dir, os.path.basename(input_file)),
                     astree=astree,
                     rtype=picked_refactoring_type,
                     pcls=picked_class,
