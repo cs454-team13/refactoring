@@ -11,6 +11,10 @@ import colorama
 import fitness
 
 
+colorama.init()
+Fore = colorama.Fore
+
+
 def populate(fname, rtype, pcls):
     print("populate {}, {}".format(rtype, pcls.name))
     refactorings = set()
@@ -19,7 +23,9 @@ def populate(fname, rtype, pcls):
         for method in methods:
             refactorings.add(
                 Refactoring.PushDownMethod(
-                    fname=fname, src_cls=pcls, target=method,
+                    fname=fname,
+                    src_cls=pcls,
+                    target=method,
                 )
             )
     if rtype == "PullUpMethod":
@@ -27,7 +33,9 @@ def populate(fname, rtype, pcls):
         for method in methods:
             refactorings.add(
                 Refactoring.PullUpMethod(
-                    fname=fname, src_cls=pcls, target=method,
+                    fname=fname,
+                    src_cls=pcls,
+                    target=method,
                 )
             )
     return refactorings
@@ -69,9 +77,9 @@ def run(input_file: str, output_file: str):
                     pcls=picked_class,
                 )
                 if len(refactorings) > 0:
-                    refactoring = random.sample(refactorings, 1)[0]
+                    refactoring = random.choice(list(refactorings))
 
-                    before_score = fitness.compute_project_score(input_file)
+                    before_score = fitness.compute_project_score(output_file)
 
                     refactoring.read_file()
                     refactoring.apply()
@@ -79,14 +87,14 @@ def run(input_file: str, output_file: str):
 
                     after_score = fitness.compute_project_score(output_file)
                     # refactoring.undo()
-                    tcc_score_change = after_score.tcc - before_score.tcc
-                    if tcc_score_change >= 0:
-                        print(f"TCC score improved: {tcc_score_change}")
+                    lcc_score_change = after_score.lscc - before_score.lscc
+                    if lcc_score_change >= 0:
+                        print(f"{Fore.GREEN}LSCC score improved: {lcc_score_change}{Fore.RESET}")
                         refactoring_count += 1
                         update_metric_log()
                         # Todo: refactored file read and write to original file
                     else:
-                        print(f"TCC score not improved: {tcc_score_change}")
+                        print(f"{Fore.GREEN}LSCC score not improved: {lcc_score_change}{Fore.RESET}")
                         refactoring.undo()
         break
 
@@ -110,8 +118,6 @@ def run(input_file: str, output_file: str):
 #   refactor2에 대해 undo()를 해야 한다면 히스토리 2를 불러와서 다시 Z에 저장한다.
 
 if __name__ == "__main__":
-    colorama.init()
-    Fore = colorama.Fore
     input_file = sys.argv[1]
     output_file = sys.argv[2]
 
