@@ -3,8 +3,10 @@ import typing
 import pprint
 import itertools
 import statistics
+import sys
 
 import astpretty
+import astroid.manager
 import astroid.nodes
 import astroid.node_classes
 from pylint.pyreverse import inspector
@@ -12,7 +14,9 @@ from pylint.pyreverse import inspector
 import astroid.helpers
 
 
-def extract_methods(cls: astroid.nodes.ClassDef) -> typing.Tuple[typing.Dict[str, typing.List[str]], typing.Set[str]]:
+def extract_methods(
+    cls: astroid.nodes.ClassDef,
+) -> typing.Tuple[typing.Dict[str, typing.List[str]], typing.Set[str]]:
     """Extracts all methods and attributes of a class, including inherited
     methods.
     For methods, extract all attributes accessed. Skip __init__().
@@ -46,7 +50,6 @@ def compute_tcc(cls: astroid.nodes.ClassDef) -> int:
     # Contains methods that access a common attribute, i.e CAU
     cau_methods: typing.Set[typing.Tuple[str, str]] = set()
     for method1, method2 in itertools.combinations(methods, 2):
-        assert method1 < method2, "Not sorted!"
         if methods[method1] & methods[method2]:
             cau_methods.add((method1, method2))
     return len(cau_methods) / (k * (k - 1) / 2)
@@ -100,6 +103,9 @@ def compute_project_score(project_path: str) -> ProjectScore:
             obj.lscc: LSCC score
             obj.tcc:  TCC score
     """
+    # Clear Astroid cache so that it always returns the correct result
+    astroid.manager.AstroidManager().clear_cache()
+
     project = inspector.project_from_files([project_path], project_name="the-project")
     linker = inspector.Linker(project, tag=True)
     # We need this to make the linker actually work on the project
@@ -117,9 +123,11 @@ def compute_project_score(project_path: str) -> ProjectScore:
                 tcc_values.append(tcc)
                 lscc_values.append(lscc)
 
+    lscc_values = [x for x in lscc_values if x is not None]
+    tcc_values = [x for x in tcc_values if x is not None]
     return ProjectScore(
-        lscc=statistics.mean(filter(lambda x: x is not None, lscc_values)),
-        tcc=statistics.mean(filter(lambda x: x is not None, tcc_values)),
+        lscc=statistics.mean(lscc_values or [0]),
+        tcc=statistics.mean(tcc_values or [0]),
     )
 
 
@@ -156,13 +164,10 @@ class AstSelfFinder:
 # return attr_names
 
 
-def main() -> None:
-    print("=================TCC=================")
-    """Script entrypoint"""
-    PROJECT_DIR = "samples"
-
-    print(compute_project_score(PROJECT_DIR))
+def main(project_path: str) -> None:
+    print(compute_project_score(project_path))
+    # print("Cache id, again:", id(astroid.manager.AstroidManager.brain.astroid_cache))
 
 
 if __name__ == "__main__":
-    main()
+    main(sys.argv[1])
