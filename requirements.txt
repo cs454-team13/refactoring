@@ -1,3 +1,4 @@
+astor==0.8.1
 astpretty==2.0.0
 black==20.8b1
   appdirs==1.4.4
