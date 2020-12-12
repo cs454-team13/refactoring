@@ -12,3 +12,9 @@ Simple python refactoring
 - Implement Push Down Method condition
 - Apply field-level refactoring only for instance fields
 - Apply search-based pick algorithm
+
+## Example
+
+```
+py automated.py input/sample1.py output/sample1.py
+```
