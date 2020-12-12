@@ -2,7 +2,6 @@ class Country:
 
     def __init__(self):
         self.population = 0
-        self.name = None
 
 
 class Korea(Country):

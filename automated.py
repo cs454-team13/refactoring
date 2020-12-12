@@ -4,7 +4,8 @@ import sys
 from FindHelper import *
 import Refactoring
 import astpretty
-import os.path
+
+import fitness
 
 
 def populate(fname, output_file, astree, rtype, pcls):
@@ -33,7 +34,7 @@ def update_metric_log():
     print("update metric log")
 
 
-def run(input_file: str, output_dir: str):
+def run(input_file: str, output_file: str):
     astree = astor.parse_file(input_file)
     desired_refactoring_count = 100
     refactoring_count = 0
@@ -50,7 +51,7 @@ def run(input_file: str, output_dir: str):
                 refactoring_types.remove(picked_refactoring_type)
                 refactorings = populate(
                     fname=input_file,
-                    output_file=os.path.join(output_dir, os.path.basename(input_file)),
+                    output_file=output_file,
                     astree=astree,
                     rtype=picked_refactoring_type,
                     pcls=picked_class,
@@ -68,4 +69,9 @@ def run(input_file: str, output_dir: str):
         break
 
 
-run(sys.argv[1], sys.argv[2])
+if __name__ == "__main__":
+    input_file = sys.argv[1]
+    output_file = sys.argv[2]
+    run(input_file, output_file)
+    score = fitness.compute_project_score(output_file)
+    print(score)

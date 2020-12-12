@@ -119,9 +119,11 @@ def compute_project_score(project_path: str) -> ProjectScore:
                 tcc_values.append(tcc)
                 lscc_values.append(lscc)
 
+    lscc_values = [x for x in lscc_values if x is not None]
+    tcc_values = [x for x in tcc_values if x is not None]
     return ProjectScore(
-        lscc=statistics.mean(filter(lambda x: x is not None, lscc_values)),
-        tcc=statistics.mean(filter(lambda x: x is not None, tcc_values)),
+        lscc=statistics.mean(lscc_values or [0]),
+        tcc=statistics.mean(tcc_values or [0]),
     )
 
 
