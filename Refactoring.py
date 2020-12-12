@@ -36,7 +36,7 @@ class Refactoring:
         """Restore the file to its previous state."""
         assert self.original_tree, "self.original_tree is empty!"
         with open(self.fname, "w") as f:
-            original_source = astor.to_source(self.origintree)
+            original_source = astor.to_source(self.original_tree)
             f.write(original_source)
 
 class PullUpMethod(Refactoring):
