@@ -3,6 +3,7 @@ import typing
 import pprint
 import itertools
 import statistics
+import sys
 
 import astpretty
 import astroid.nodes
@@ -159,13 +160,10 @@ class AstSelfFinder:
 # return attr_names
 
 
-def main() -> None:
-    print("=================TCC=================")
-    """Script entrypoint"""
-    PROJECT_DIR = "samples"
-
-    print(compute_project_score(PROJECT_DIR))
+def main(project_path: str) -> None:
+    print("Checking", project_path)
+    print(compute_project_score(project_path))
 
 
 if __name__ == "__main__":
-    main()
+    main(sys.argv[1])
