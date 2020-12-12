@@ -12,7 +12,9 @@ from pylint.pyreverse import inspector
 import astroid.helpers
 
 
-def extract_methods(cls: astroid.nodes.ClassDef) -> typing.Tuple[typing.Dict[str, typing.List[str]], typing.Set[str]]:
+def extract_methods(
+    cls: astroid.nodes.ClassDef,
+) -> typing.Tuple[typing.Dict[str, typing.List[str]], typing.Set[str]]:
     """Extracts all methods and attributes of a class, including inherited
     methods.
     For methods, extract all attributes accessed. Skip __init__().
