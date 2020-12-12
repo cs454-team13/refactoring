@@ -1,3 +1,5 @@
+import shutil
+
 import ast, astor
 import random
 import sys
@@ -9,7 +11,7 @@ import colorama
 import fitness
 
 
-def populate(fname, output_file, astree, rtype, pcls):
+def populate(fname, rtype, pcls):
     print("populate {}, {}".format(rtype, pcls.name))
     refactorings = set()
     if rtype == "PushDownMethod":
@@ -17,7 +19,7 @@ def populate(fname, output_file, astree, rtype, pcls):
         for method in methods:
             refactorings.add(
                 Refactoring.PushDownMethod(
-                    fname, astree, pcls, method, output_file=output_file
+                    fname=fname, src_cls=pcls, target=method,
                 )
             )
     if rtype == "PullUpMethod":
@@ -25,7 +27,7 @@ def populate(fname, output_file, astree, rtype, pcls):
         for method in methods:
             refactorings.add(
                 Refactoring.PullUpMethod(
-                    fname, astree, pcls, method, output_file=output_file
+                    fname=fname, src_cls=pcls, target=method,
                 )
             )
     return refactorings
@@ -35,11 +37,22 @@ def update_metric_log():
     print("update metric log")
 
 
+def tcc_improvement_check(before_file: str, after_file: str) -> float:
+    """Return the change in TCC score between two files."""
+    before_score = fitness.compute_project_score(before_file)
+    after_score = fitness.compute_project_score(after_file)
+    return after_score.tcc - before_score.tcc
+
+
 def run(input_file: str, output_file: str):
-    astree = astor.parse_file(input_file)
+    # input_file을 output_file로 미리 복사한다.
+    # 그러면 input_file은 건드리지 않고 output_file을 자유롭게 갖고 놀 수 있다.
+    shutil.copyfile(input_file, output_file)
+
     desired_refactoring_count = 100
     refactoring_count = 0
     while refactoring_count < desired_refactoring_count:
+        astree = astor.parse_file(output_file)
         classes = set([node for node in find_all_classes(astree)])
         while len(classes) > 0:
             picked_class = random.sample(classes, 1)[0]
@@ -51,24 +64,50 @@ def run(input_file: str, output_file: str):
                 print(picked_refactoring_type)
                 refactoring_types.remove(picked_refactoring_type)
                 refactorings = populate(
-                    fname=input_file,
-                    output_file=output_file,
-                    astree=astree,
+                    fname=output_file,
                     rtype=picked_refactoring_type,
                     pcls=picked_class,
                 )
                 if len(refactorings) > 0:
                     refactoring = random.sample(refactorings, 1)[0]
+
+                    before_score = fitness.compute_project_score(input_file)
+
+                    refactoring.read_file()
                     refactoring.apply()
+                    refactoring.write_file()
+
+                    after_score = fitness.compute_project_score(output_file)
                     # refactoring.undo()
-                    # if fitness_function_improves():
-                    #     refactoring_count += 1
-                    #     update_metric_log()
-                    #     Todo: refactored file read and write to original file
-                    # else:
-                    #     refactoring.undo()
+                    tcc_score_change = after_score.tcc - before_score.tcc
+                    if tcc_score_change >= 0:
+                        print(f"TCC score improved: {tcc_score_change}")
+                        refactoring_count += 1
+                        update_metric_log()
+                        # Todo: refactored file read and write to original file
+                    else:
+                        print(f"TCC score not improved: {tcc_score_change}")
+                        refactoring.undo()
         break
 
+
+#
+# A -> Z
+#  ----------
+#  현재 상황: refactoring종류가 PullUPMethod, PullDownMethod, ...
+#  input file A 이고 output file B라고 하자.
+#
+# run()은 A를 읽어서 astree를 만든다.
+#
+#   refactor1을 실행하면 astree를 고친 다음 Z에 저장한다.
+#   refactor2을 실행하면 astree를 고친 다음 Z에 저장한다.
+#
+# 바꾼다면...??
+#
+#   처음에 run()이 A를 읽어서 Z에 복사한다. (리팩토링은 아직 미적용)
+#   refactor1을 실행하면 Z를 읽어서 고친 다음 Z에 저장한다. 이때 고치기 전의 내용을 기억한다. (히스토리 1)
+#   refactor2을 실행하면 Z를 읽어서 고친 다음 Z에 저장한다. 이때 고치기 전의 내용을 기억한다. (히스토리 2)
+#   refactor2에 대해 undo()를 해야 한다면 히스토리 2를 불러와서 다시 Z에 저장한다.
 
 if __name__ == "__main__":
     colorama.init()

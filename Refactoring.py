@@ -4,12 +4,11 @@ import astpretty
 
 class Refactoring:
 
-    def __init__(self, fname, astree, src_cls, output_file: str):
+    rtype = ""
+
+    def __init__(self, *, fname, src_cls):
         self.fname = fname
-        self.astree = astree
-        self.rtype = ""
         self.src_cls = src_cls
-        self.output_file = output_file
 
     def create(self):
         self.origintree = astor.parse_file(self.fname)
@@ -22,21 +21,33 @@ class Refactoring:
     #         origin_source = astor.to_source(self.origintree)
     #         f.write(origin_source)
 
+    def read_file(self):
+        """Load the file from disk. Call this before calling apply()."""
+        self.original_tree = astor.parse_file(self.fname)
+        self.astree = astor.parse_file(self.fname)
+
     def write_file(self):
         # with open("refactored_{}".format(self.fname), 'w') as f:  # DEBUG
-        self.origintree = astor.parse_file(self.fname)
-        with open(self.output_file, 'w') as f:
+        with open(self.fname, 'w') as f:
             refactored_source = astor.to_source(self.astree)
             f.write(refactored_source)
 
+    def undo(self):
+        """Restore the file to its previous state."""
+        assert self.original_tree, "self.original_tree is empty!"
+        with open(self.fname, "w") as f:
+            original_source = astor.to_source(self.origintree)
+            f.write(original_source)
+
 class PullUpMethod(Refactoring):
 
-    def __init__(self, fname, astree, src_cls, target, *args, **kwargs):
-        super(PullUpMethod, self).__init__(fname, astree, src_cls, *args, **kwargs)
+    def __init__(self, *, target, **kwargs):
+        super(PullUpMethod, self).__init__(**kwargs)
         self.rtype = "PullUpMethod"
         self.target = target
 
     def apply(self):
+        """Back up the contents of self.fname and refactor it"""
         # Todo!: sibling classes should be also checked to pull up
         parent = findHelper.find_superclass(self.astree, self.src_cls)
         if parent is not None:
@@ -50,14 +61,13 @@ class PullUpMethod(Refactoring):
                 for (subclass, child) in children:
                     subclass.body.remove(child)
                 parent.body.append(self.target)
-                super().write_file()
 
 '''TODO: PushDown의 경우 어떤 subclass로 옮길지 정하는 조건문 필요'''
 
 class PushDownMethod(Refactoring):
 
-    def __init__(self, fname, astree, src_cls, target, *args, **kwargs):
-        super(PushDownMethod, self).__init__(fname, astree, src_cls, *args, **kwargs)
+    def __init__(self, *, target, **kwargs):
+        super(PushDownMethod, self).__init__(**kwargs)
         self.rtype = "PushDownMethod"
         self.target = target
 
@@ -71,8 +81,6 @@ class PushDownMethod(Refactoring):
 
         if remove:
             self.src_cls.body.remove(self.target)
-
-        super().write_file()
 
 '''TODO: field-level Refactoring의 경우 class attribute, instance attribute 비교'''
 ''' instance field만 고려하는걸로'''
@@ -97,7 +105,6 @@ class PullUpField(Refactoring):
                 break
         if parentinit is not None:
             parentinit.body.append(self.target)
-        super().write_file()
 
 class PushDownField(Refactoring):
 
@@ -137,4 +144,3 @@ class PushDownField(Refactoring):
                 break
         if parentinit is not None:
             parentinit.body.insert(1, self.target)
-        super().write_file()
