@@ -3,6 +3,9 @@ class Country:
     def __init__(self):
         self.population = 0
 
+    def get_name(self):
+        return self.name
+
 
 class Korea(Country):
 
@@ -12,9 +15,6 @@ class Korea(Country):
 
     def hi(self):
         return self.get_name()
-
-    def get_name(self):
-        return self.name
 
 
 class China(Country):
