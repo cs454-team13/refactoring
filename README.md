@@ -3,15 +3,22 @@
 Simple python refactoring   
 
 ## Method
-- Pull Up Method
-- Push Down Method
-- Pull Up Field
-- Push Down Field
+- Pull Up Method   
+- Push Down Method   
+~~Pull Up Field~~   
+~~Push Down Field~~   
+
+## Metric
+- LSCC
+- TCC
+
+## Automated
+- search-based : Hill Climbing (random)
 
 ## TODO
-- Implement Push Down Method condition
-- Apply field-level refactoring only for instance fields
-- Apply search-based pick algorithm
+✅　Implement Push Down Method condition   
+❌　Apply field-level refactoring only for instance fields    
+✅　Apply search-based pick algorithm   
 
 ## Example
 
