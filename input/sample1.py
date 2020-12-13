@@ -19,15 +19,19 @@ class ChildClass1(ParentClass):
         self.child_field_1 = True
 
     def child1_method1(self):
-        return self.field1 if self.child_field_1 else None
+        return self.field1 + len(self.field2)
 
     def child1_method2(self):
         return self.field2
 
 
 class AnotherChildClass(ParentClass):
+    def __init__(self):
+        super().__init__()
+        self.child_field_1 = True
+
     def child1_method1(self):
-        return self.field1 if self.child_field_1 else None
+        return self.field1 + len(self.field2)
 
     def child_method_another(self):
         """Method that accesses nothing"""

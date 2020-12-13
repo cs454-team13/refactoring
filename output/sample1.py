@@ -14,7 +14,7 @@ class ParentClass:
         return self.field2
 
     def child1_method1(self):
-        return self.field1 if self.child_field_1 else None
+        return self.field1 + len(self.field2)
 
 
 class ChildClass1(ParentClass):
@@ -28,6 +28,10 @@ class ChildClass1(ParentClass):
 
 
 class AnotherChildClass(ParentClass):
+
+    def __init__(self):
+        super().__init__()
+        self.child_field_1 = True
 
     def child_method_another(self):
         """Method that accesses nothing"""
